@@ -19,14 +19,6 @@ export async function GET(request: Request) {
   }
 
   if (code) {
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-    console.log(
-      "[auth/callback] url=%s key.len=%d key.head=%s key.tail=%s",
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      key.length,
-      key.slice(0, 14),
-      key.slice(-4)
-    );
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
