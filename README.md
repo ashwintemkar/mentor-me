@@ -1,13 +1,13 @@
 # Mentor Me 🧑‍🏫
 
-An AI mentor that reviews my mentee's code the way I actually would, reads the feedback out loud, and is fine-tuned on my own past review comments so it sounds like me — not a generic bot.
+An AI mentor that reviews my mentee's code the way I actually would, fine-tuned on my own past review comments so it sounds like me — not a generic bot.
 
 **Live:** https://mentor-me.ashwintemkar.com
 **Repo:** https://github.com/ashwintemkar/mentor-me
 
 ## The friend
 
-I informally mentor a junior developer — reviewing her PRs, answering "why would you do it this way" questions whenever I have a free minute, which is inconsistent and usually late at night. Mentor Me reviews her code on her schedule, writes it up, and reads it back to her in a short voice note, so she's never stuck waiting on me — and it still sounds like *my* feedback.
+I informally mentor a junior developer — reviewing her PRs, answering "why would you do it this way" questions whenever I have a free minute, which is inconsistent and usually late at night. Mentor Me reviews her code on her schedule and writes up what actually matters, so she's never stuck waiting on me — and it still reads like *my* feedback.
 
 ## How it's built
 
@@ -15,7 +15,6 @@ A Next.js (TypeScript, App Router) web app:
 
 - **[Supabase Auth](https://supabase.com)** — sign-in with Google or GitHub, session handled server-side via `@supabase/ssr`.
 - **[Backboard](https://backboard.io)** (`backboard-sdk`) — a single API key routes the review request to an open-weight model (e.g. Llama 3 via OpenRouter), so the mentor agent isn't locked to one model or one provider.
-- **[ElevenLabs](https://elevenlabs.io)** — converts the written review into a spoken walkthrough so my mentee can listen to feedback away from her screen.
 - **[Tinker](https://tinker-docs.thinkingmachines.ai)** (Thinking Machines) — fine-tunes a small open model (`Llama-3.1-8B-Instruct`, LoRA rank 16) on a corpus of my own past review comments in `finetune/review_examples.jsonl`, so the tone and priorities match how I actually mentor. `finetune/compare.py` samples the same prompt from the base model and the fine-tuned checkpoint side by side.
 - **[Render](https://render.com)** — hosts the app itself (`render.yaml` blueprint included), so my mentee just opens a URL rather than me running anything locally for her.
 
@@ -24,7 +23,6 @@ app/page.tsx              → landing page, sign in with Google/GitHub
 app/auth/callback/        → Supabase OAuth code exchange
 app/dashboard/page.tsx    → paste a mentee's code, get a review
 app/api/review/route.ts   → calls Backboard (lib/backboard.ts)
-app/api/voice/route.ts    → calls ElevenLabs (lib/elevenlabs.ts)
 utils/supabase/           → browser/server/middleware Supabase clients
 finetune/                 → Tinker scripts that give the reviewer my own voice
 examples/                 → a sample mentee submission to try it on
@@ -46,11 +44,11 @@ A closed API could generate *a* review. It couldn't be fine-tuned on my own comm
 
 ```bash
 npm install
-cp .env.local.example .env.local   # fill in Supabase, Backboard, ElevenLabs keys
+cp .env.local.example .env.local   # fill in Supabase and Backboard keys
 npm run dev
 ```
 
-Sign in at `/`, then paste code to review on `/dashboard`. Google/GitHub sign-in is configured as a provider inside your Supabase project (Authentication → Providers), not in this app's env vars — see the setup checklist in the post.
+Sign in at `/`, then paste code to review on `/dashboard`. Google/GitHub sign-in is configured as a provider inside your Supabase project (Authentication → Providers), not in this app's env vars.
 
 To give the reviewer your own mentoring voice:
 
