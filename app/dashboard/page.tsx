@@ -1,8 +1,12 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
+import { createClient, isSupabaseConfigured } from "@/utils/supabase/server";
 import ReviewForm from "@/components/ReviewForm";
 
 export default async function Dashboard() {
+  if (!isSupabaseConfigured()) {
+    redirect("/");
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 

@@ -1,7 +1,11 @@
-import { createClient } from "@/utils/supabase/server";
+import { createClient, isSupabaseConfigured } from "@/utils/supabase/server";
 import { synthesizeSpeech } from "@/lib/elevenlabs";
 
 export async function POST(request: Request) {
+  if (!isSupabaseConfigured()) {
+    return new Response("Supabase is not configured on the server", { status: 503 });
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
