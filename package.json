@@ -1,0 +1,13 @@
+{
+  "name": "mentor-me",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "An AI mentor that reviews a mentee's code, speaks the feedback, and is fine-tuned on the mentor's own review style.",
+  "scripts": {
+    "review": "node src/cli.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
