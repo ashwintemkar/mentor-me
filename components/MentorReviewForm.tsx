@@ -29,6 +29,7 @@ export default function MentorReviewForm({ menteeId }: { menteeId: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<StructuredReview | null>(null);
+  const [reviewedCode, setReviewedCode] = useState<string | null>(null);
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -64,6 +65,7 @@ export default function MentorReviewForm({ menteeId }: { menteeId: string }) {
         improvements: review.improvements,
         next_steps: review.next_steps,
       });
+      setReviewedCode(code);
       setCode("");
       clearFile();
       router.refresh();
@@ -114,6 +116,12 @@ export default function MentorReviewForm({ menteeId }: { menteeId: string }) {
 
       {result && (
         <div className="review-result">
+          {reviewedCode && (
+            <details>
+              <summary className="muted">Code this feedback refers to</summary>
+              <pre className="code-preview">{reviewedCode}</pre>
+            </details>
+          )}
           {result.strengths.length > 0 && (
             <>
               <h3>✅ Strengths</h3>
