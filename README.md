@@ -2,7 +2,7 @@
 
 An AI mentor that reviews my mentee's code the way I actually would, reads the feedback out loud, and is fine-tuned on my own past review comments so it sounds like me — not a generic bot.
 
-**Live:** https://ashwintemkar.com/mentor-me
+**Live:** https://mentor-me.ashwintemkar.com
 **Repo:** https://github.com/ashwintemkar/mentor-me
 
 ## The friend
@@ -11,16 +11,22 @@ I informally mentor a junior developer — reviewing her PRs, answering "why wou
 
 ## How it's built
 
-- **[Backboard](https://backboard.io)** — a single API key routes the review request to an open-weight model (e.g. Llama 3 via Groq/Fireworks), so the mentor agent isn't locked to one model or one provider.
+A Next.js (TypeScript, App Router) web app:
+
+- **[Supabase Auth](https://supabase.com)** — sign-in with Google or GitHub, session handled server-side via `@supabase/ssr`.
+- **[Backboard](https://backboard.io)** (`backboard-sdk`) — a single API key routes the review request to an open-weight model (e.g. Llama 3 via OpenRouter), so the mentor agent isn't locked to one model or one provider.
 - **[ElevenLabs](https://elevenlabs.io)** — converts the written review into a spoken walkthrough so my mentee can listen to feedback away from her screen.
 - **[Tinker](https://tinker-docs.thinkingmachines.ai)** (Thinking Machines) — fine-tunes a small open model (`Llama-3.1-8B-Instruct`, LoRA rank 16) on a corpus of my own past review comments in `finetune/review_examples.jsonl`, so the tone and priorities match how I actually mentor. `finetune/compare.py` samples the same prompt from the base model and the fine-tuned checkpoint side by side.
 
 ```
-src/review.js   → sends code to Backboard, gets a written review back
-src/voice.js    → sends the review text to ElevenLabs, gets an mp3 back
-src/cli.js      → ties the two together: npm run review -- path/to/file.js
-finetune/       → Tinker scripts that give the reviewer my own voice
-examples/       → a sample mentee submission to try it on
+app/page.tsx              → landing page, sign in with Google/GitHub
+app/auth/callback/        → Supabase OAuth code exchange
+app/dashboard/page.tsx    → paste a mentee's code, get a review
+app/api/review/route.ts   → calls Backboard (lib/backboard.ts)
+app/api/voice/route.ts    → calls ElevenLabs (lib/elevenlabs.ts)
+utils/supabase/           → browser/server/middleware Supabase clients
+finetune/                 → Tinker scripts that give the reviewer my own voice
+examples/                 → a sample mentee submission to try it on
 ```
 
 ## Why open innovation matters here
@@ -37,10 +43,12 @@ A closed API could generate *a* review. It couldn't be fine-tuned on my own comm
 ## Running it
 
 ```bash
-npm install  # no dependencies yet — uses Node's built-in fetch
-cp .env.example .env   # fill in BACKBOARD_API_KEY and ELEVENLABS_API_KEY
-npm run review -- examples/mentee-submission.js
+npm install
+cp .env.local.example .env.local   # fill in Supabase, Backboard, ElevenLabs keys
+npm run dev
 ```
+
+Sign in at `/`, then paste code to review on `/dashboard`. Google/GitHub sign-in is configured as a provider inside your Supabase project (Authentication → Providers), not in this app's env vars — see the setup checklist in the post.
 
 To give the reviewer your own mentoring voice:
 

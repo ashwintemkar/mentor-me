@@ -1,7 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-
-const BACKBOARD_BASE = "https://app.backboard.io/api";
+import { BackboardClient } from "backboard-sdk";
 
 function mentorSystemPrompt(styleNotes: string | null) {
   const base =
@@ -26,37 +25,33 @@ async function loadStyleNotes(): Promise<string | null> {
   }
 }
 
-export async function reviewCode(
-  code: string,
-  { language = "javascript" }: { language?: string } = {}
-): Promise<string> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let client: any = null;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getClient(): any {
   const apiKey = process.env.BACKBOARD_API_KEY;
   if (!apiKey) {
     throw new Error("BACKBOARD_API_KEY is not set on the server.");
   }
+  if (!client) {
+    client = new BackboardClient({ apiKey });
+  }
+  return client;
+}
 
+export async function reviewCode(
+  code: string,
+  { language = "javascript" }: { language?: string } = {}
+): Promise<string> {
   const styleNotes = await loadStyleNotes();
   const systemPrompt = mentorSystemPrompt(styleNotes);
 
-  const res = await fetch(`${BACKBOARD_BASE}/threads/messages`, {
-    method: "POST",
-    headers: {
-      "X-API-Key": apiKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      content: `${systemPrompt}\n\n---\n\nReview this ${language} code:\n\n${code}`,
-      llm_provider: process.env.BACKBOARD_LLM_PROVIDER || "groq",
-      model_name: process.env.BACKBOARD_MODEL_NAME || "llama-3.3-70b-versatile",
-      stream: "false",
-      memory: "Auto",
-    }),
+  const response = await getClient().sendMessage({
+    content: `${systemPrompt}\n\n---\n\nReview this ${language} code:\n\n${code}`,
+    llm_provider: process.env.BACKBOARD_LLM_PROVIDER || "openrouter",
+    model_name: process.env.BACKBOARD_MODEL_NAME || "meta-llama/llama-3.3-70b-instruct",
   });
 
-  if (!res.ok) {
-    throw new Error(`Backboard request failed: ${res.status} ${await res.text()}`);
-  }
-
-  const data = await res.json();
-  return data.content || data.message?.content || JSON.stringify(data);
+  return response.content;
 }
