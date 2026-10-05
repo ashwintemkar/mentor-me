@@ -17,6 +17,7 @@ A Next.js (TypeScript, App Router) web app:
 - **[Backboard](https://backboard.io)** (`backboard-sdk`) — a single API key routes the review request to an open-weight model (e.g. Llama 3 via OpenRouter), so the mentor agent isn't locked to one model or one provider.
 - **[ElevenLabs](https://elevenlabs.io)** — converts the written review into a spoken walkthrough so my mentee can listen to feedback away from her screen.
 - **[Tinker](https://tinker-docs.thinkingmachines.ai)** (Thinking Machines) — fine-tunes a small open model (`Llama-3.1-8B-Instruct`, LoRA rank 16) on a corpus of my own past review comments in `finetune/review_examples.jsonl`, so the tone and priorities match how I actually mentor. `finetune/compare.py` samples the same prompt from the base model and the fine-tuned checkpoint side by side.
+- **[Render](https://render.com)** — hosts the app itself (`render.yaml` blueprint included), so my mentee just opens a URL rather than me running anything locally for her.
 
 ```
 app/page.tsx              → landing page, sign in with Google/GitHub
@@ -27,6 +28,7 @@ app/api/voice/route.ts    → calls ElevenLabs (lib/elevenlabs.ts)
 utils/supabase/           → browser/server/middleware Supabase clients
 finetune/                 → Tinker scripts that give the reviewer my own voice
 examples/                 → a sample mentee submission to try it on
+render.yaml               → Render Blueprint for one-click deployment
 ```
 
 ## Why open innovation matters here
@@ -59,6 +61,12 @@ export TINKER_API_KEY=...
 python train.py
 python compare.py <checkpoint-path-printed-by-train.py>
 ```
+
+## Deploying on Render
+
+1. [render.com](https://render.com) → sign in with GitHub → **New → Blueprint** → pick `ashwintemkar/mentor-me`. Render reads `render.yaml` and sets up the web service.
+2. Fill in the env vars it prompts for (same list as `.env.local.example`).
+3. Deploy. Render gives you a `*.onrender.com` URL; add a custom domain (`mentor-me.ashwintemkar.com`) under the service's **Settings → Custom Domains** and point a CNAME at the target it gives you.
 
 ---
 

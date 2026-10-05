@@ -12,7 +12,7 @@ Mentor Me — an AI mentor for a junior developer I informally mentor. She gets 
 
 ## Demo
 
-https://ashwintemkar.com/mentor-me
+https://mentor-me.ashwintemkar.com
 
 ## Code
 
@@ -23,6 +23,7 @@ https://github.com/ashwintemkar/mentor-me
 - **Backboard** routes the review request through a single API key to an open-weight model, so the mentor agent isn't locked to one provider.
 - **ElevenLabs** turns the written review into a spoken walkthrough she can listen to away from her screen.
 - **Tinker** (Thinking Machines) fine-tunes a small open model with LoRA on a corpus of my own past review comments, so its feedback carries my actual tone and priorities instead of generic LLM notes. `finetune/compare.py` samples the base model and the fine-tuned checkpoint on the same prompt, side by side.
+- **Render** hosts the app itself (via a `render.yaml` Blueprint), so my mentee just opens a link — nothing runs on my machine for her to depend on.
 
 ## Why Does Open Innovation Matter?
 
@@ -32,4 +33,4 @@ This only works because the model is open-weight. I can fine-tune it on my own p
 
 - Best Use of Tinker (Thinking Machines)
 - Best Use of Backboard
-- Best Use of ElevenLabs
+- Best Use of Render

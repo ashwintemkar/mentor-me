@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: mentor-me
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: BACKBOARD_API_KEY
+        sync: false
+      - key: BACKBOARD_LLM_PROVIDER
+        sync: false
+      - key: BACKBOARD_MODEL_NAME
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: ELEVENLABS_VOICE_ID
+        sync: false
