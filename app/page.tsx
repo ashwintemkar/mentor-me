@@ -11,8 +11,7 @@ export default async function Home() {
       <h1>🧑‍🏫 Mentor Me</h1>
       <p>
         An AI mentor that reviews your mentee&apos;s code the way you actually would,
-        reads the feedback out loud, and is fine-tuned on your own past review
-        comments so it sounds like you.
+        fine-tuned on your own past review comments so it sounds like you.
       </p>
 
       {!configured ? (
