@@ -10,8 +10,10 @@ export default async function Home() {
     <main className="container">
       <h1>🧑‍🏫 Mentor Me</h1>
       <p>
-        An AI mentor that reviews your mentee&apos;s code the way you actually would,
-        fine-tuned on your own past review comments so it sounds like you.
+        A guide for every mentee you&apos;re growing, not just a linter. Track each
+        person, get structured feedback — strengths, what to fix and why, what to
+        learn next — and watch recurring patterns surface over time. Fine-tuned on
+        your own past review comments so it sounds like you.
       </p>
 
       {!configured ? (
