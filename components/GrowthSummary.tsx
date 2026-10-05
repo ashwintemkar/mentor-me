@@ -1,4 +1,4 @@
-import type { ReviewRow } from "@/lib/mentees";
+import type { ReviewRow } from "@/lib/connections";
 
 function topThemes(reviews: ReviewRow[], field: "improvements" | "next_steps", limit = 5) {
   const counts = new Map<string, number>();

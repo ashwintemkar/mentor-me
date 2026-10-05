@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { createClient, isSupabaseConfigured } from "@/utils/supabase/server";
-import { getMentee, listReviews } from "@/lib/mentees";
+import { getConnection, listReviews } from "@/lib/connections";
 import MentorReviewForm from "@/components/MentorReviewForm";
 import GrowthSummary from "@/components/GrowthSummary";
 import ReviewHistory from "@/components/ReviewHistory";
 
-export default async function MenteePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ConnectionPage({ params }: { params: Promise<{ id: string }> }) {
   if (!isSupabaseConfigured()) {
     redirect("/");
   }
@@ -18,29 +18,37 @@ export default async function MenteePage({ params }: { params: Promise<{ id: str
     redirect("/");
   }
 
-  const mentee = await getMentee(supabase, id);
-  if (!mentee) {
+  const connection = await getConnection(supabase, id);
+  if (!connection || (connection.mentor_id !== user.id && connection.mentee_id !== user.id)) {
     notFound();
   }
 
-  const reviews = await listReviews(supabase, id);
+  const iAmMentor = connection.mentor_id === user.id;
+  const other = iAmMentor ? connection.mentee : connection.mentor;
+  const reviews = connection.status === "accepted" ? await listReviews(supabase, id) : [];
 
   return (
     <main className="container">
       <Link href="/dashboard" className="back-link">
-        ← All mentees
+        ← Dashboard
       </Link>
-      <h1>{mentee.name}</h1>
-      <p className="muted">
-        {[mentee.track, mentee.level].filter(Boolean).join(" · ") || "No track set"}
-      </p>
-      {mentee.goals && <p>Goals: {mentee.goals}</p>}
+      <h1>@{other.username}</h1>
+      <p className="muted">{iAmMentor ? "You mentor them" : "They mentor you"}</p>
 
-      <GrowthSummary reviews={reviews} />
-      <MentorReviewForm menteeId={mentee.id} />
+      {connection.status === "pending" && (
+        <p className="muted">This connection is still pending — review history unlocks once accepted.</p>
+      )}
+      {connection.status === "declined" && <p className="error">This connection was declined.</p>}
 
-      <h2 style={{ marginTop: 32 }}>Review history</h2>
-      <ReviewHistory reviews={reviews} />
+      {connection.status === "accepted" && (
+        <>
+          <GrowthSummary reviews={reviews} />
+          <MentorReviewForm connectionId={connection.id} />
+
+          <h2 style={{ marginTop: 32 }}>Review history</h2>
+          <ReviewHistory reviews={reviews} />
+        </>
+      )}
     </main>
   );
 }

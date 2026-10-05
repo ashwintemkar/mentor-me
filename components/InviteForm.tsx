@@ -3,31 +3,33 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
-export default function AddMenteeForm() {
+export default function InviteForm() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [track, setTrack] = useState("");
-  const [level, setLevel] = useState("beginner");
-  const [goals, setGoals] = useState("");
+  const [username, setUsername] = useState("");
+  const [role, setRole] = useState<"mentor" | "mentee">("mentee");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccess(null);
     try {
-      const res = await fetch("/api/mentees", {
+      const res = await fetch("/api/connections", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, track, level, goals }),
+        body: JSON.stringify({ username, requestedRole: role }),
       });
       if (!res.ok) throw new Error(await res.text());
-      setName("");
-      setTrack("");
-      setGoals("");
-      setOpen(false);
+      setSuccess(
+        role === "mentee"
+          ? `Invite sent to @${username} to be your mentee.`
+          : `Request sent to @${username} to be your mentor.`
+      );
+      setUsername("");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -39,7 +41,7 @@ export default function AddMenteeForm() {
   if (!open) {
     return (
       <button onClick={() => setOpen(true)} style={{ marginTop: 16 }}>
-        + Add a mentee
+        + Invite or request someone
       </button>
     );
   }
@@ -47,34 +49,26 @@ export default function AddMenteeForm() {
   return (
     <form onSubmit={handleSubmit} className="panel" style={{ marginTop: 16 }}>
       <label>
-        Name
-        <input value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g. Priya" />
-      </label>
-      <label>
-        Track / stack
-        <input value={track} onChange={(e) => setTrack(e.target.value)} placeholder="e.g. JavaScript, React" />
-      </label>
-      <label>
-        Level
-        <select value={level} onChange={(e) => setLevel(e.target.value)}>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-        </select>
-      </label>
-      <label>
-        Goals
-        <textarea
-          value={goals}
-          onChange={(e) => setGoals(e.target.value)}
-          rows={3}
-          placeholder="What are they trying to get better at?"
+        Their username
+        <input
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+          placeholder="e.g. priya-23"
         />
       </label>
+      <label>
+        I want them to be my...
+        <select value={role} onChange={(e) => setRole(e.target.value as "mentor" | "mentee")}>
+          <option value="mentee">Mentee (I'll mentor them)</option>
+          <option value="mentor">Mentor (they'll mentor me)</option>
+        </select>
+      </label>
       {error && <p className="error">{error}</p>}
+      {success && <p className="success">{success}</p>}
       <div className="row-buttons">
         <button type="submit" disabled={loading}>
-          {loading ? "Adding..." : "Add mentee"}
+          {loading ? "Sending..." : "Send"}
         </button>
         <button type="button" className="secondary" onClick={() => setOpen(false)}>
           Cancel

@@ -20,7 +20,7 @@ const EXT_TO_LANG: Record<string, string> = {
   php: "php",
 };
 
-export default function MentorReviewForm({ menteeId }: { menteeId: string }) {
+export default function MentorReviewForm({ connectionId }: { connectionId: string }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [code, setCode] = useState("");
@@ -53,7 +53,7 @@ export default function MentorReviewForm({ menteeId }: { menteeId: string }) {
     setError(null);
     setResult(null);
     try {
-      const res = await fetch(`/api/mentees/${menteeId}/reviews`, {
+      const res = await fetch(`/api/connections/${connectionId}/reviews`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, language }),

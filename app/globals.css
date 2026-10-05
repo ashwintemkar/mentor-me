@@ -183,6 +183,25 @@ select {
   padding-top: 16px;
 }
 
+.success {
+  color: var(--accent);
+  margin-top: 12px;
+}
+
+.pending-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid #242933;
+}
+
+.pending-item:last-child {
+  border-bottom: none;
+}
+
 .improvement-card {
   background: var(--panel2);
   border-radius: 10px;

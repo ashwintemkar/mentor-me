@@ -1,44 +1,47 @@
 # Mentor Me 🧑‍🏫
 
-An AI mentor that reviews my mentee's code the way I actually would, fine-tuned on my own past review comments so it sounds like me — not a generic bot.
+A two-sided mentorship platform: anyone can mentor, anyone can be mentored, and often both at once. Connect by username, get structured AI-guided feedback on real code — strengths, specific things to fix and why, concrete next steps — and watch recurring patterns surface as a mentee grows.
 
 **Live:** https://mentor-me.ashwintemkar.com
 **Repo:** https://github.com/ashwintemkar/mentor-me
 
-## The friend
+## The idea
 
-I informally mentor a junior developer — reviewing her PRs, answering "why would you do it this way" questions whenever I have a free minute, which is inconsistent and usually late at night. Mentor Me reviews her code on her schedule and writes up what actually matters, so she's never stuck waiting on me — and it still reads like *my* feedback.
+I informally mentor a junior developer, and I've also wanted a mentor myself for things I'm still learning. Most "code review" tools assume one fixed direction. Mentor Me doesn't: sign up, get a unique username, and either invite someone to be your mentee or request someone to be your mentor. Once they accept, code submitted in that connection gets reviewed like an actual mentor would — not a linter dump, but a structured breakdown with *why* something matters and *what to work on next* — and a growth summary tracks what keeps coming up across every review in that relationship.
 
 ## How it's built
 
 A Next.js (TypeScript, App Router) web app:
 
-- **[Supabase Auth](https://supabase.com)** — sign-in with Google or GitHub, session handled server-side via `@supabase/ssr`.
-- **[Backboard](https://backboard.io)** (`backboard-sdk`) — a single API key routes the review request to an open-weight model (e.g. Llama 3 via OpenRouter), so the mentor agent isn't locked to one model or one provider.
-- **[Tinker](https://tinker-docs.thinkingmachines.ai)** (Thinking Machines) — fine-tunes a small open model (`Llama-3.1-8B-Instruct`, LoRA rank 16) on a corpus of my own past review comments in `finetune/review_examples.jsonl`, so the tone and priorities match how I actually mentor. `finetune/compare.py` samples the same prompt from the base model and the fine-tuned checkpoint side by side.
-- **[Render](https://render.com)** — hosts the app itself (`render.yaml` blueprint included), so my mentee just opens a URL rather than me running anything locally for her.
+- **[Supabase](https://supabase.com)** — Auth (Google/GitHub sign-in) and Postgres for `profiles`, `connections`, and `reviews`, with row-level security scoping every row to the people actually in that relationship.
+- **[Backboard](https://backboard.io)** (`backboard-sdk`) — a single API key routes the review request to an open-weight model (Llama 3.3 70B via OpenRouter), returning structured JSON (strengths / improvements / next steps), not a wall of text.
+- **[Tinker](https://tinker-docs.thinkingmachines.ai)** (Thinking Machines) — fine-tunes a small open model (`Llama-3.1-8B-Instruct`, LoRA rank 16) on a mentor's own past review comments in `finetune/review_examples.jsonl`, so feedback carries their actual tone. `finetune/compare.py` samples the base model and the fine-tuned checkpoint side by side.
+- **[Render](https://render.com)** — hosts the app itself (`render.yaml` blueprint included).
 
 ```
-app/page.tsx              → landing page, sign in with Google/GitHub
-app/auth/callback/        → Supabase OAuth code exchange
-app/dashboard/page.tsx    → paste a mentee's code, get a review
-app/api/review/route.ts   → calls Backboard (lib/backboard.ts)
-utils/supabase/           → browser/server/middleware Supabase clients
-finetune/                 → Tinker scripts that give the reviewer my own voice
-examples/                 → a sample mentee submission to try it on
-render.yaml               → Render Blueprint for one-click deployment
+app/page.tsx                          → landing page, sign in
+app/dashboard/page.tsx                → your connections: mentoring, being mentored, pending
+app/dashboard/[id]/page.tsx           → one connection: growth summary, review form, history
+app/api/connections/                  → create/list connections, accept/decline invites
+app/api/connections/[id]/reviews/     → submit code, get a structured review via Backboard
+app/api/users/search/                 → look someone up by username to invite/request
+lib/profiles.ts                       → username assignment + lookup
+lib/connections.ts                    → connection + review data access
+lib/backboard.ts                      → Backboard call, structured-JSON prompt + parsing
+utils/supabase/                       → browser/server/middleware Supabase clients
+supabase/schema.sql                   → profiles/connections/reviews tables + RLS policies
+finetune/                             → Tinker scripts for a mentor's own voice
+render.yaml                           → Render Blueprint for one-click deployment
 ```
 
 ## Why open innovation matters here
 
 This only works because the model is open-weight:
 
-- **I can fine-tune it on my own private review history.** No closed, hosted model lets an individual mentor do that without becoming an enterprise customer.
-- **I'm not locked to one model or vendor.** Backboard lets me route the same request to whichever open model is cheapest or best that week.
-- **It costs close to nothing to run**, so my mentee can ask for a review as often as she wants without anyone metering her.
-- **Her code never has to sit on a server I don't control** beyond the inference call itself — there's no account, no dashboard logging her mistakes while she's still learning.
-
-A closed API could generate *a* review. It couldn't be fine-tuned on my own comments, couldn't be routed between providers for cost, and would mean her learning curve runs through someone else's billing dashboard.
+- **A mentor can fine-tune it on their own private review history.** No closed, hosted model lets an individual do that without becoming an enterprise customer.
+- **Not locked to one model or vendor.** Backboard routes to whichever open model is cheapest or best that week.
+- **Costs close to nothing to run**, so anyone in a connection can ask for a review as often as they want without anyone metering them.
+- **Code never has to sit on a server neither party controls** beyond the inference call itself, and row-level security means even other users of the same app can't see it.
 
 ## Running it
 
@@ -48,9 +51,9 @@ cp .env.local.example .env.local   # fill in Supabase and Backboard keys
 npm run dev
 ```
 
-Sign in at `/`, then paste code to review on `/dashboard`. Google/GitHub sign-in is configured as a provider inside your Supabase project (Authentication → Providers), not in this app's env vars.
+Run `supabase/schema.sql` once in your Supabase project's SQL Editor before first use. Sign in at `/`, you'll get a username automatically, then invite or request someone from `/dashboard`.
 
-To give the reviewer your own mentoring voice:
+To give a mentor's reviews their own voice:
 
 ```bash
 cd finetune
@@ -64,7 +67,7 @@ python compare.py <checkpoint-path-printed-by-train.py>
 
 1. [render.com](https://render.com) → sign in with GitHub → **New → Blueprint** → pick `ashwintemkar/mentor-me`. Render reads `render.yaml` and sets up the web service.
 2. Fill in the env vars it prompts for (same list as `.env.local.example`).
-3. Deploy. Render gives you a `*.onrender.com` URL; add a custom domain (`mentor-me.ashwintemkar.com`) under the service's **Settings → Custom Domains** and point a CNAME at the target it gives you.
+3. Deploy. Render gives you a `*.onrender.com` URL; add a custom domain under the service's **Settings → Custom Domains** and point a CNAME at the target it gives you.
 
 ---
 

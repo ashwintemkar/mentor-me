@@ -1,4 +1,4 @@
-import type { ReviewRow } from "@/lib/mentees";
+import type { ReviewRow } from "@/lib/connections";
 
 export default function ReviewHistory({ reviews }: { reviews: ReviewRow[] }) {
   if (reviews.length === 0) {

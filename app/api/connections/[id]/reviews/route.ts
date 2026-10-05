@@ -1,5 +1,5 @@
 import { createClient, isSupabaseConfigured } from "@/utils/supabase/server";
-import { getMentee, listReviews, createReview } from "@/lib/mentees";
+import { getConnection, listReviews, createReview } from "@/lib/connections";
 import { reviewCode } from "@/lib/backboard";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -12,8 +12,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   try {
-    const mentee = await getMentee(supabase, id);
-    if (!mentee) return new Response("Not found", { status: 404 });
+    const connection = await getConnection(supabase, id);
+    if (!connection) return new Response("Not found", { status: 404 });
     const reviews = await listReviews(supabase, id);
     return Response.json({ reviews });
   } catch (err) {
@@ -36,20 +36,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!code.trim()) return new Response("Missing code", { status: 400 });
 
   try {
-    const mentee = await getMentee(supabase, id);
-    if (!mentee) return new Response("Not found", { status: 404 });
+    const connection = await getConnection(supabase, id);
+    if (!connection) return new Response("Not found", { status: 404 });
+    if (connection.status !== "accepted") {
+      return new Response("This connection hasn't been accepted yet", { status: 400 });
+    }
 
-    const menteeContext = [
-      `Name: ${mentee.name}`,
-      mentee.track ? `Track: ${mentee.track}` : null,
-      mentee.level ? `Level: ${mentee.level}` : null,
-      mentee.goals ? `Goals: ${mentee.goals}` : null,
-    ]
-      .filter(Boolean)
-      .join("\n");
-
+    const menteeContext = `Mentee username: ${connection.mentee.username}`;
     const { structured, raw } = await reviewCode(code, { language, menteeContext });
-    const saved = await createReview(supabase, id, { language, code, structured, raw });
+    const saved = await createReview(supabase, id, user.id, { language, code, structured, raw });
     return Response.json({ review: saved });
   } catch (err) {
     return new Response(err instanceof Error ? err.message : "Unknown error", { status: 500 });
