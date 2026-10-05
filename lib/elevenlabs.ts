@@ -1,9 +1,7 @@
-import { writeFile } from "node:fs/promises";
-
-export async function speak(text, outPath) {
+export async function synthesizeSpeech(text: string): Promise<ArrayBuffer> {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
-    throw new Error("ELEVENLABS_API_KEY is not set — copy .env.example to .env and fill it in.");
+    throw new Error("ELEVENLABS_API_KEY is not set on the server.");
   }
   const voiceId = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
 
@@ -23,7 +21,5 @@ export async function speak(text, outPath) {
     throw new Error(`ElevenLabs request failed: ${res.status} ${await res.text()}`);
   }
 
-  const audio = Buffer.from(await res.arrayBuffer());
-  await writeFile(outPath, audio);
-  return outPath;
+  return res.arrayBuffer();
 }

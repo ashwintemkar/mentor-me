@@ -1,11 +1,12 @@
 import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 const BACKBOARD_BASE = "https://app.backboard.io/api";
 
-function mentorSystemPrompt(styleNotes) {
+function mentorSystemPrompt(styleNotes: string | null) {
   const base =
     "You are reviewing a junior developer's code the way a patient, direct mentor would: " +
-    "point out the one or two things that actually matter, explain *why*, suggest a concrete fix, " +
+    "point out the one or two things that actually matter, explain why, suggest a concrete fix, " +
     "and end with one encouraging line. Keep it under 150 words. No generic praise, no nitpicking everything.";
   if (!styleNotes) return base;
   return (
@@ -15,20 +16,23 @@ function mentorSystemPrompt(styleNotes) {
   );
 }
 
-async function loadStyleNotes() {
-  const path = process.env.FINETUNED_STYLE_NOTES_FILE;
-  if (!path) return null;
+async function loadStyleNotes(): Promise<string | null> {
+  const file = process.env.FINETUNED_STYLE_NOTES_FILE;
+  if (!file) return null;
   try {
-    return (await readFile(path, "utf-8")).trim();
+    return (await readFile(path.join(process.cwd(), file), "utf-8")).trim();
   } catch {
     return null;
   }
 }
 
-export async function reviewCode(code, { language = "javascript" } = {}) {
+export async function reviewCode(
+  code: string,
+  { language = "javascript" }: { language?: string } = {}
+): Promise<string> {
   const apiKey = process.env.BACKBOARD_API_KEY;
   if (!apiKey) {
-    throw new Error("BACKBOARD_API_KEY is not set — copy .env.example to .env and fill it in.");
+    throw new Error("BACKBOARD_API_KEY is not set on the server.");
   }
 
   const styleNotes = await loadStyleNotes();

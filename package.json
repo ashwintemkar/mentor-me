@@ -2,12 +2,23 @@
   "name": "mentor-me",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
-  "description": "An AI mentor that reviews a mentee's code, speaks the feedback, and is fine-tuned on the mentor's own review style.",
   "scripts": {
-    "review": "node src/cli.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
-  "engines": {
-    "node": ">=18"
+  "dependencies": {
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.45.4",
+    "next": "^14.2.35",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "@types/node": "^20.16.11",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0"
   }
 }
