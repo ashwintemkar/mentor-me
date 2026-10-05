@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient, isSupabaseConfigured } from "@/utils/supabase/server";
-import { ensureProfile } from "@/lib/profiles";
+import { getOwnProfile } from "@/lib/profiles";
 import { listConnections } from "@/lib/connections";
 import ConnectionCard from "@/components/ConnectionCard";
 import PendingConnectionItem from "@/components/PendingConnectionItem";
@@ -18,7 +19,11 @@ export default async function Dashboard() {
     redirect("/");
   }
 
-  const profile = await ensureProfile(supabase, user);
+  const profile = await getOwnProfile(supabase, user.id);
+  if (!profile) {
+    redirect("/onboarding/username");
+  }
+
   const connections = await listConnections(supabase, user.id);
 
   const mentoring = connections.filter((c) => c.status === "accepted" && c.mentor_id === user.id);
@@ -29,7 +34,12 @@ export default async function Dashboard() {
     <main className="container">
       <div className="header-row">
         <div>
-          <h1>Hey, @{profile.username}</h1>
+          <h1>
+            Hey, @{profile.username}{" "}
+            <Link href="/onboarding/username" className="muted" style={{ fontSize: "0.6em" }}>
+              (change)
+            </Link>
+          </h1>
           <p>Signed in as {user.email}</p>
         </div>
         <SignOutButton />
